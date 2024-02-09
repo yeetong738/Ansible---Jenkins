@@ -1,0 +1,26 @@
+---
+- name: Setup Web Server
+  hosts: lin1  # Replace with the hostname or IP address of your target Linux machine
+  become: true  # This allows Ansible to escalate to root privileges
+
+  tasks:
+    - name: Install Apache HTTP server (httpd)
+      yum:
+        name: httpd
+        state: present
+      become: true  # Ensure root privileges are used for package installation
+
+    - name: Copy index.html to /var/www
+      copy:
+        src: /home/ec2-user/index.html  # Replace with the actual path to your index.html file
+        dest: /var/www/html/index.html
+      become: true  # Ensure root privileges are used for the copying
+      notify:
+      - restart httpd
+
+    - name: Start and enable httpd service
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+      become: true  # Ensure root privileges are used for service management
