@@ -1,0 +1,71 @@
+---
+- name: Install and configure Jenkins Server
+  hosts: Jenk1 #replace with your inventory hosts 
+  become: yes
+  
+  tasks: 
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      become: yes
+      
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+      become: yes
+
+    - name: Add Jenkins APT key
+      apt_key:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+      become: yes
+
+    - name: ensure the repository is configured
+      apt_repository: 
+        repo: deb https://pkg.jenkins.io/debian-stable binary/ 
+        state: present
+      become: yes
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+      become: yes
+
+    - name: Start and enable Jenkins service
+      service:
+        name: jenkins
+        enabled: true
+        state: started
+      become: yes
+
+    #- name: Wait for Jenkins to start
+     # uri:
+      #  url: http://18.139.108.2:8080
+       # method: GET
+       # status_code: 200
+      #register: jenkins_status
+      #until: jenkins_status.status == 200
+      #retries: 10
+      #delay: 10
+
+    - name: Get Jenkins initial admin password
+      command: "cat /var/lib/jenkins/secrets/initialAdminPassword"
+      register: jenkins_admin_password
+      become: yes
+
+    - name: Display Jenkins initial admin password
+      debug:
+        var: jenkins_admin_password.stdout
+
+    - name: Send email with Jenkins initial admin password
+      mail:
+        host: smtp.gmail.com      # Replace with your SMTP server details
+        port: 587                   # Replace with the appropriate port
+        username: testyt@gmail.com     # Replace with your SMTP username
+        password: asdf    # Replace with your SMTP password
+        to: ty9696961@gmail.com       # Replace with the recipient's email address
+        subtype: plain
+        subject: "Jenkins Initial Admin Token"
+        body: "Your Jenkins initial Token: {{ jenkins_admin_password.stdout }}"
+      when: jenkins_admin_password is defined
